@@ -240,8 +240,8 @@ if uploaded_file is not None:
             "Before": [acc_before, stat_par_before, eq_opp_before],
             "After": [acc_after, stat_par_after, eq_opp_after]
         })
-        res_df.to_csv("fairness_results_app.csv", index=False)
-        st.success("Results exported to 'fairness_results_app.csv'")
+        res_df.to_csv("results/fairness_results_app.csv", index=False)
+        st.success("Results exported to 'results/fairness_results_app.csv'")
 
 else:
     st.info("👆 Please upload your dataset to begin.")
