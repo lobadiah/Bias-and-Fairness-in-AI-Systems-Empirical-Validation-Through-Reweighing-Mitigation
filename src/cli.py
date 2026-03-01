@@ -115,7 +115,7 @@ def main():
     unprivileged_groups = [{protected_attr: 0.0}]
 
     # 1. Load and Clean
-    df = load_and_clean_data("adult.csv")
+    df = load_and_clean_data("data/adult_v2.csv")
 
     # 2. Preprocess
     X_train_scaled, X_test_scaled, y_train, y_test, protected_attr, target = preprocess_data(df, target, protected_attr)
@@ -177,8 +177,8 @@ def main():
     plt.axhline(0, color='black', linestyle='--', linewidth=0.8)
     plt.legend()
     plt.tight_layout()
-    plt.savefig('bias_visualization.png')
-    print("\n📊 Visualization saved to 'bias_visualization.png'")
+    plt.savefig('results/bias_visualization.png')
+    print("\n📊 Visualization saved to 'results/bias_visualization.png'")
 
     # Export key results to CSV
     results = pd.DataFrame({
@@ -186,8 +186,8 @@ def main():
         "Before Mitigation": [acc_before, stat_par_before, eq_opp_before],
         "After Mitigation": [acc_after, stat_par_after, eq_opp_after]
     })
-    results.to_csv("fairness_results.csv", index=False)
-    print("💾 Results saved to 'fairness_results.csv'")
+    results.to_csv("results/fairness_results.csv", index=False)
+    print("💾 Results saved to 'results/fairness_results.csv'")
 
 if __name__ == "__main__":
     main()
