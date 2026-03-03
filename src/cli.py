@@ -160,13 +160,26 @@ def main():
 
     plt.figure(figsize=(8, 5))
     x = np.arange(len(labels))
-    plt.bar(x - 0.15, before, width=0.3, label='Before', color='skyblue')
-    plt.bar(x + 0.15, after, width=0.3, label='After', color='orange')
+    before_bars = plt.bar(x - 0.15, before, width=0.3, label='Before', color='skyblue')
+    after_bars = plt.bar(x + 0.15, after, width=0.3, label='After', color='orange')
     plt.xticks(x, labels)
     plt.ylabel('Metric Value (Closer to 0 = Fairer)')
     plt.title('Fairness Improvement after Reweighing')
     plt.axhline(0, color='black', linestyle='--', linewidth=0.8)
     plt.legend()
+
+    for bar in list(before_bars) + list(after_bars):
+        height = bar.get_height()
+        y_offset = 0.005 if height >= 0 else -0.005
+        plt.text(
+            bar.get_x() + bar.get_width() / 2,
+            height + y_offset,
+            f"{height:.3f}",
+            ha='center',
+            va='bottom' if height >= 0 else 'top',
+            fontsize=9
+        )
+
     plt.tight_layout()
     plt.savefig('results/bias_visualization.png')
     print("\nVisualization saved to 'results/bias_visualization.png'")

@@ -207,19 +207,32 @@ if uploaded_file is not None:
 
     labels = ['Stat. Parity', 'Eq. Opportunity']
     x = np.arange(len(labels))
-    ax1.bar(x - 0.15, [stat_par_before, eq_opp_before], width=0.3, label='Before', color='skyblue')
-    ax1.bar(x + 0.15, [stat_par_after, eq_opp_after], width=0.3, label='After', color='orange')
+    fairness_before_bars = ax1.bar(x - 0.15, [stat_par_before, eq_opp_before], width=0.3, label='Before', color='skyblue')
+    fairness_after_bars = ax1.bar(x + 0.15, [stat_par_after, eq_opp_after], width=0.3, label='After', color='orange')
     ax1.set_xticks(x)
     ax1.set_xticklabels(labels)
     ax1.set_title('Fairness Metrics Comparison')
     ax1.axhline(0, color='black', linestyle='--', linewidth=0.8)
     ax1.legend()
 
-    ax2.bar(['Before', 'After'], [acc_before, acc_after], color=['skyblue', 'orange'])
+    for bar in list(fairness_before_bars) + list(fairness_after_bars):
+        height = bar.get_height()
+        y_offset = 0.005 if height >= 0 else -0.005
+        ax1.text(
+            bar.get_x() + bar.get_width() / 2,
+            height + y_offset,
+            f"{height:.3f}",
+            ha='center',
+            va='bottom' if height >= 0 else 'top',
+            fontsize=9
+        )
+
+    accuracy_bars = ax2.bar(['Before', 'After'], [acc_before, acc_after], color=['skyblue', 'orange'])
     ax2.set_title('Accuracy Comparison')
     ax2.set_ylim([0, 1])
-    for i, v in enumerate([acc_before, acc_after]):
-        ax2.text(i, v + 0.02, f"{v:.3f}", ha='center')
+    for bar in accuracy_bars:
+        height = bar.get_height()
+        ax2.text(bar.get_x() + bar.get_width() / 2, height + 0.005, f"{height:.3f}", ha='center', fontsize=9)
 
     plt.tight_layout()
     st.pyplot(fig)
