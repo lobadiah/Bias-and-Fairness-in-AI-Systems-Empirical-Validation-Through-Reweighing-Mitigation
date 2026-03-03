@@ -1,8 +1,4 @@
-# ============================================================
-# FAIRNESS EVALUATION & MITIGATION STREAMLIT APP
-# Author: Louis Obadiah (MSc AI Engineering)
-# Supervisor: Asst. Prof. Dr. John Olaifa, Okan University
-# ============================================================
+# Fairness Evaluation and Mitigation Streamlit Application
 
 import streamlit as st
 import pandas as pd
@@ -16,29 +12,47 @@ from aif360.datasets import BinaryLabelDataset
 from aif360.metrics import ClassificationMetric
 from aif360.algorithms.preprocessing import Reweighing
 
-# ============================================================
-# 1️⃣ STREAMLIT PAGE CONFIG
-# ============================================================
 st.set_page_config(page_title="Fairness Evaluation Framework", layout="wide")
-st.title("⚖️ Fairness Evaluation and Mitigation Framework")
-st.caption("Louis Obadiah (MSc AI Engineering) — Supervised by Asst. Prof. Dr. John Olaifa, Okan University")
 
-# ============================================================
-# 2️⃣ LOAD DATASET
-# ============================================================
-uploaded_file = st.file_uploader("📂 Upload your dataset (CSV format)", type=["csv"])
+st.markdown(
+    """
+    <style>
+        .block-container {
+            max-width: 1200px;
+            padding-top: 1.2rem;
+            padding-bottom: 2rem;
+        }
+        h1, h2, h3, h4 {
+            letter-spacing: 0.2px;
+        }
+        [data-testid="stMetricValue"] {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+        [data-testid="stMetricLabel"] {
+            font-size: 0.95rem;
+        }
+        div[data-testid="stExpander"] {
+            border-radius: 8px;
+        }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
+st.title("Fairness Evaluation and Mitigation Framework")
+st.caption("Louis Obadiah (MSc AI Engineering) | Supervised by Asst. Prof. Dr. John Olaifa, Okan University")
+
+uploaded_file = st.file_uploader("Upload dataset (CSV format)", type=["csv"])
 
 if uploaded_file is not None:
     df = pd.read_csv(uploaded_file)
-    st.success("✅ Dataset loaded successfully!")
+    st.success("Dataset loaded successfully.")
 
-    with st.expander("🔍 View Raw Data (First 5 rows)"):
+    with st.expander("View raw data (first 5 rows)"):
         st.dataframe(df.head())
 
-    # ============================================================
-    # DATA CLEANING
-    # ============================================================
-    st.markdown("### 🧹 Step 1: Data Cleaning")
+    st.markdown("### Step 1: Data cleaning")
 
     # Replace placeholders for missing values
     df = df.replace('?', np.nan)
@@ -55,7 +69,7 @@ if uploaded_file is not None:
                 df[col] = df[col].fillna(df[col].mode()[0])
 
     if missing_cols:
-        st.info(f"📊 Filled missing values in columns: {', '.join(missing_cols)}")
+        st.info(f"Filled missing values in columns: {', '.join(missing_cols)}")
 
     # Standardize column names
     df.columns = [c.strip().lower().replace('-', '_').replace(' ', '_') for c in df.columns]
@@ -63,13 +77,10 @@ if uploaded_file is not None:
     # Selection of target and protected attribute
     col_a, col_b = st.columns(2)
     with col_a:
-        target = st.selectbox("🎯 Select target column:", df.columns, index=list(df.columns).index('income') if 'income' in df.columns else 0)
+        target = st.selectbox("Select target column:", df.columns, index=list(df.columns).index('income') if 'income' in df.columns else 0)
     with col_b:
-        protected_attr = st.selectbox("🛡️ Select protected attribute:", df.columns, index=list(df.columns).index('sex') if 'sex' in df.columns else 0)
+        protected_attr = st.selectbox("Select protected attribute:", df.columns, index=list(df.columns).index('sex') if 'sex' in df.columns else 0)
 
-    # ============================================================
-    # TARGET CONVERSION
-    # ============================================================
     # Convert target to binary (1 = positive class, 0 = negative class)
     # Detect if it's already binary or needs conversion
     unique_targets = df[target].unique()
@@ -82,24 +93,18 @@ if uploaded_file is not None:
 
     # Display target distribution
     target_dist = df[target].value_counts()
-    st.write(f"**Target Distribution:** {target_dist.get(0, 0)} (0), {target_dist.get(1, 0)} (1)")
+    st.write(f"**Target distribution:** {target_dist.get(0, 0)} (0), {target_dist.get(1, 0)} (1)")
 
-    # ============================================================
-    # ENCODING
-    # ============================================================
     # Encode categorical variables
     categorical_cols = df.select_dtypes(include='object').columns.tolist()
     if categorical_cols:
         for col in categorical_cols:
             le = LabelEncoder()
             df[col] = le.fit_transform(df[col].astype(str))
-        st.info(f"📝 Encoded {len(categorical_cols)} categorical columns")
+        st.info(f"Encoded {len(categorical_cols)} categorical columns")
 
     df = df.fillna(0)
 
-    # ============================================================
-    # DEFINE PRIVILEGED GROUPS
-    # ============================================================
     unique_vals = sorted(df[protected_attr].unique())
     st.write(f"**Protected attribute '{protected_attr}' encoded values:** {unique_vals}")
 
@@ -108,9 +113,8 @@ if uploaded_file is not None:
     privileged_groups = [{protected_attr: privileged_val}]
     unprivileged_groups = [{protected_attr: v} for v in unique_vals if v != privileged_val]
 
-    # ============================================================
-    # 3️⃣ TRAIN / TEST SPLIT & SCALING
-    # ============================================================
+    st.markdown("### Step 2: Model preparation")
+
     X = df.drop(columns=[target])
     y = df[target]
 
@@ -132,22 +136,16 @@ if uploaded_file is not None:
     X_train_scaled_df[protected_attr] = train_protected
     X_test_scaled_df[protected_attr] = test_protected
 
-    # ============================================================
-    # 4️⃣ BASELINE MODEL
-    # ============================================================
-    st.markdown("### ⚙️ Step 2: Baseline Model Training")
+    st.markdown("### Step 3: Baseline model training")
 
     model = LogisticRegression(max_iter=1000)
     model.fit(X_train_scaled_df, y_train)
     y_pred = model.predict(X_test_scaled_df)
 
     acc_before = accuracy_score(y_test, y_pred)
-    st.write(f"**Model Accuracy (Before Mitigation):** `{acc_before:.3f}`")
+    st.write(f"**Model accuracy (before mitigation):** `{acc_before:.3f}`")
 
-    # ============================================================
-    # 5️⃣ FAIRNESS EVALUATION (Before)
-    # ============================================================
-    st.markdown("### 📊 Step 3: Fairness Evaluation")
+    st.markdown("### Step 4: Fairness evaluation")
 
     def get_metrics(X_df, y_true, y_pred_vals):
         bld_df = pd.concat([X_df.reset_index(drop=True), y_true.reset_index(drop=True)], axis=1)
@@ -162,7 +160,7 @@ if uploaded_file is not None:
     try:
         stat_par_before, eq_opp_before = get_metrics(X_test_scaled_df, y_test, y_pred)
 
-        st.write("#### 📈 Fairness Metrics (Before Mitigation)")
+        st.write("#### Fairness metrics (before mitigation)")
         col1, col2 = st.columns(2)
         with col1:
             st.metric(label="Statistical Parity Difference", value=f"{stat_par_before:.3f}")
@@ -170,13 +168,10 @@ if uploaded_file is not None:
             st.metric(label="Equal Opportunity Difference", value=f"{eq_opp_before:.3f}")
 
     except Exception as e:
-        st.error(f"❌ Failed to compute fairness metrics: {str(e)}")
+        st.error(f"Failed to compute fairness metrics: {str(e)}")
         stat_par_before, eq_opp_before = 0.0, 0.0
 
-    # ============================================================
-    # 6️⃣ APPLY REWEIGHING
-    # ============================================================
-    st.markdown("### 🧩 Step 4: Apply Bias Mitigation (Reweighing)")
+    st.markdown("### Step 5: Bias mitigation with reweighing")
 
     try:
         train_bld_df = pd.concat([X_train_scaled_df.reset_index(drop=True), y_train.reset_index(drop=True)], axis=1)
@@ -194,8 +189,8 @@ if uploaded_file is not None:
 
         stat_par_after, eq_opp_after = get_metrics(X_test_scaled_df, y_test, y_pred_rw)
 
-        st.write(f"**Model Accuracy (After Mitigation):** `{acc_after:.3f}`")
-        st.write("#### 📈 Fairness Metrics (After Mitigation)")
+        st.write(f"**Model accuracy (after mitigation):** `{acc_after:.3f}`")
+        st.write("#### Fairness metrics (after mitigation)")
         col1, col2 = st.columns(2)
         with col1:
             st.metric(label="Statistical Parity Difference", value=f"{stat_par_after:.3f}", delta=f"{stat_par_after - stat_par_before:+.3f}")
@@ -203,13 +198,10 @@ if uploaded_file is not None:
             st.metric(label="Equal Opportunity Difference", value=f"{eq_opp_after:.3f}", delta=f"{eq_opp_after - eq_opp_before:+.3f}")
 
     except Exception as e:
-        st.warning(f"⚠️ Reweighing failed: {str(e)}")
+        st.warning(f"Reweighing failed: {str(e)}")
         acc_after, stat_par_after, eq_opp_after = acc_before, stat_par_before, eq_opp_before
 
-    # ============================================================
-    # 7️⃣ VISUALIZATION
-    # ============================================================
-    st.markdown("### 📊 Step 5: Results Visualization")
+    st.markdown("### Step 6: Results visualization")
 
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 5))
 
@@ -229,19 +221,19 @@ if uploaded_file is not None:
     for i, v in enumerate([acc_before, acc_after]):
         ax2.text(i, v + 0.02, f"{v:.3f}", ha='center')
 
+    plt.tight_layout()
     st.pyplot(fig)
 
-    # ============================================================
-    # 8️⃣ EXPORT
-    # ============================================================
-    if st.button("💾 Export Results to CSV"):
+    st.markdown("### Step 7: Export")
+
+    if st.button("Export results to CSV"):
         res_df = pd.DataFrame({
             "Metric": ["Accuracy", "Stat. Parity Diff", "Eq. Opportunity Diff"],
             "Before": [acc_before, stat_par_before, eq_opp_before],
             "After": [acc_after, stat_par_after, eq_opp_after]
         })
         res_df.to_csv("results/fairness_results_app.csv", index=False)
-        st.success("Results exported to 'results/fairness_results_app.csv'")
+        st.success("Results exported to results/fairness_results_app.csv")
 
 else:
-    st.info("👆 Please upload your dataset to begin.")
+    st.info("Please upload a dataset to begin.")

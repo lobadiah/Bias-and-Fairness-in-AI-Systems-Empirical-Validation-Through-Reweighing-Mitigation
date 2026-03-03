@@ -1,7 +1,4 @@
-# ======================================
-# FAIRNESS EVALUATION AND MITIGATION TOOL
-# Using your uploaded dataset: adult.csv
-# ======================================
+# Fairness Evaluation and Mitigation Tool
 
 import pandas as pd
 import numpy as np
@@ -16,10 +13,11 @@ from aif360.datasets import BinaryLabelDataset
 from aif360.metrics import ClassificationMetric
 from aif360.algorithms.preprocessing import Reweighing
 
+
 def load_and_clean_data(filepath):
     """Loads and performs initial cleaning of the dataset."""
     df = pd.read_csv(filepath)
-    print(f"✅ Dataset loaded successfully from {filepath}")
+    print(f"Dataset loaded successfully from {filepath}")
 
     # Replace placeholders for missing values and clean
     df = df.replace('?', np.nan)
@@ -33,7 +31,7 @@ def load_and_clean_data(filepath):
             else:
                 df[col] = df[col].fillna(df[col].mode()[0])
 
-    print(f"✅ After cleaning, dataset shape: {df.shape}")
+    print(f"After cleaning, dataset shape: {df.shape}")
 
     # Standardize column names
     df.columns = [c.strip().lower().replace('-', '_').replace(' ', '_') for c in df.columns]
@@ -60,7 +58,7 @@ def preprocess_data(df, target='income', protected_attr='sex'):
         X, y, test_size=0.3, random_state=42, stratify=y
     )
 
-    # Keep track of protected attribute before scaling for AIF360
+    # Keep protected attribute before scaling for AIF360
     train_protected = X_train[protected_attr].reset_index(drop=True)
     test_protected = X_test[protected_attr].reset_index(drop=True)
 
@@ -72,7 +70,7 @@ def preprocess_data(df, target='income', protected_attr='sex'):
     X_train_scaled_df = pd.DataFrame(X_train_scaled, columns=X.columns)
     X_test_scaled_df = pd.DataFrame(X_test_scaled, columns=X.columns)
 
-    # Replace the scaled protected attribute with the unscaled one for AIF360
+    # Replace scaled protected attribute with unscaled values for AIF360
     X_train_scaled_df[protected_attr] = train_protected
     X_test_scaled_df[protected_attr] = test_protected
 
@@ -99,41 +97,34 @@ def evaluate_fairness(X_test_df, y_test, y_pred, target, protected_attr, privile
 
     return metric.statistical_parity_difference(), metric.equal_opportunity_difference()
 
+
 def main():
     protected_attr = 'sex'
     target = 'income'
-    # Based on the scaled data, we need to find the values for privileged and unprivileged groups
-    # Since we scaled, the values are no longer 0 and 1.
-    # However, AIF360 BinaryLabelDataset expects the original or encoded values before scaling if we are to use them as group identifiers.
-    # BUT, I passed the scaled DF to BinaryLabelDataset.
-
-    # Let's fix this by passing unscaled protected attributes to BinaryLabelDataset or knowing their scaled values.
-    # Better yet, let's keep the protected attribute unscaled for the sake of AIF360 if possible,
-    # or just use the encoded (but not scaled) values for the group definitions.
 
     privileged_groups = [{protected_attr: 1.0}]
     unprivileged_groups = [{protected_attr: 0.0}]
 
-    # 1. Load and Clean
+    # 1. Load and clean data
     df = load_and_clean_data("data/adult_v2.csv")
 
     # 2. Preprocess
     X_train_scaled, X_test_scaled, y_train, y_test, protected_attr, target = preprocess_data(df, target, protected_attr)
 
-    # 3. Train Baseline Model
+    # 3. Train baseline model
     model = LogisticRegression(max_iter=1000)
     model.fit(X_train_scaled, y_train)
     y_pred = model.predict(X_test_scaled)
 
     acc_before = accuracy_score(y_test, y_pred)
-    print(f"\n⚙️ Model Accuracy (Before Mitigation): {acc_before:.3f}")
+    print(f"\nModel accuracy (before mitigation): {acc_before:.3f}")
 
     stat_par_before, eq_opp_before = evaluate_fairness(X_test_scaled, y_test, y_pred, target, protected_attr, privileged_groups, unprivileged_groups)
-    print(f"📊 Fairness Metrics (Before Mitigation):")
+    print("Fairness metrics (before mitigation):")
     print(f"  Statistical Parity Difference: {stat_par_before:.3f}")
     print(f"  Equal Opportunity Difference: {eq_opp_before:.3f}")
 
-    # 4. Apply Reweighing (Bias Mitigation)
+    # 4. Apply reweighing (bias mitigation)
     train_df = pd.concat([X_train_scaled.reset_index(drop=True), y_train.reset_index(drop=True)], axis=1)
     train_bld = BinaryLabelDataset(
         df=train_df,
@@ -155,14 +146,14 @@ def main():
     y_pred_rw = model_rw.predict(X_test_scaled)
 
     acc_after = accuracy_score(y_test, y_pred_rw)
-    print(f"\n⚙️ Model Accuracy (After Mitigation): {acc_after:.3f}")
+    print(f"\nModel accuracy (after mitigation): {acc_after:.3f}")
 
     stat_par_after, eq_opp_after = evaluate_fairness(X_test_scaled, y_test, y_pred_rw, target, protected_attr, privileged_groups, unprivileged_groups)
-    print(f"📊 Fairness Metrics (After Mitigation):")
+    print("Fairness metrics (after mitigation):")
     print(f"  Statistical Parity Difference: {stat_par_after:.3f}")
     print(f"  Equal Opportunity Difference: {eq_opp_after:.3f}")
 
-    # 5. Visualize & Export Results
+    # 5. Visualize and export results
     labels = ['Statistical Parity Diff', 'Equal Opportunity Diff']
     before = [stat_par_before, eq_opp_before]
     after = [stat_par_after, eq_opp_after]
@@ -178,7 +169,7 @@ def main():
     plt.legend()
     plt.tight_layout()
     plt.savefig('results/bias_visualization.png')
-    print("\n📊 Visualization saved to 'results/bias_visualization.png'")
+    print("\nVisualization saved to 'results/bias_visualization.png'")
 
     # Export key results to CSV
     results = pd.DataFrame({
@@ -187,7 +178,7 @@ def main():
         "After Mitigation": [acc_after, stat_par_after, eq_opp_after]
     })
     results.to_csv("results/fairness_results.csv", index=False)
-    print("💾 Results saved to 'results/fairness_results.csv'")
+    print("Results saved to 'results/fairness_results.csv'")
 
 if __name__ == "__main__":
     main()

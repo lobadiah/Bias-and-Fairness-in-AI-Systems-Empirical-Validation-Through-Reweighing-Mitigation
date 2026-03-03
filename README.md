@@ -1,15 +1,15 @@
-# ⚖️ Fairness Evaluation and Mitigation Framework
+# Fairness Evaluation and Mitigation Framework
 
-A professional tool for evaluating and mitigating bias in machine learning models using the **AIF360** library. This framework provides both a **CLI tool** for automated analysis and a **Streamlit Web App** for interactive exploration.
+This project evaluates and mitigates bias in machine learning models using the AIF360 library. It provides a command-line interface for automated analysis and a Streamlit dashboard for interactive evaluation.
 
-## 🚀 Features
-- **Bias Detection:** Computes fairness metrics like *Statistical Parity Difference* and *Equal Opportunity Difference*.
-- **Bias Mitigation:** Implements the *Reweighing* algorithm to balance datasets before model training.
-- **Visual Insights:** Generates comparative visualizations of accuracy and fairness metrics.
-- **Dual Interface:** Choose between a command-line interface or a user-friendly web application.
-- **Exportable Results:** Save your findings directly to CSV.
+## Features
+- Bias detection using Statistical Parity Difference and Equal Opportunity Difference.
+- Bias mitigation using the Reweighing preprocessing algorithm.
+- Visual comparison of model accuracy and fairness metrics before and after mitigation.
+- Two interfaces: command-line workflow and Streamlit web dashboard.
+- CSV export for generated results.
 
-## 📁 Project Structure
+## Project Structure
 ```text
 .
 ├── data/               # Raw and processed datasets
@@ -21,40 +21,40 @@ A professional tool for evaluating and mitigating bias in machine learning model
 └── README.md           # Project documentation
 ```
 
-## 🛠️ Installation
+## Installation
 
-1. **Clone the repository:**
+1. Clone the repository:
    ```bash
    git clone <repository-url>
    cd <repository-name>
    ```
 
-2. **Install dependencies:**
+2. Install dependencies:
    ```bash
    pip install -r requirements.txt
    ```
 
-## 💻 Usage
+## Usage
 
-### 1. Command-Line Interface (CLI)
+### Command-Line Interface
 Run the automated evaluation on the provided Adult dataset:
 ```bash
 python src/cli.py
 ```
 Results will be saved in the `results/` directory.
 
-### 2. Streamlit Web App
+### Streamlit Dashboard
 Launch the interactive dashboard to upload and analyze your own datasets:
 ```bash
 streamlit run src/app.py
 ```
 
-## 📊 Methodology
-The framework follows a standard fairness-aware machine learning pipeline:
-1. **Data Cleaning:** Handling missing values and encoding categorical features.
-2. **Baseline Evaluation:** Training a Logistic Regression model and measuring its fairness.
-3. **Mitigation:** Applying AIF360's `Reweighing` algorithm to the training data.
-4. **Final Evaluation:** Retraining the model on reweighed data and comparing results.
+## Methodology
+The framework follows this fairness-aware machine learning pipeline:
+1. Data cleaning to handle missing values and encode categorical features.
+2. Baseline evaluation with Logistic Regression and fairness measurement.
+3. Bias mitigation with AIF360 Reweighing on training data.
+4. Final evaluation after mitigation and comparison of outcomes.
 
 ---
 **Author:** Louis Obadiah (MSc AI Engineering)
